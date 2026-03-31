@@ -4,28 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Training App Ultimate</title>
-
 <style>
 body {
   margin: 0;
   font-family: Arial, sans-serif;
   background: radial-gradient(circle at top, #0f172a, #020617);
   color: white;
+  min-height: 100vh;
 }
 
 .container {
   padding: 20px;
   max-width: 500px;
   margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 h1 { text-align: center; }
-
 .card {
   background: rgba(30,41,59,0.85);
   padding: 15px;
   border-radius: 15px;
-  margin-bottom: 12px;
   box-shadow: 0 0 15px rgba(37,99,235,0.3);
 }
 
@@ -39,9 +40,9 @@ button {
   color: white;
   font-size: 15px;
   cursor: pointer;
-  transition: transform 0.1s;
+  transition: transform 0.1s, box-shadow 0.2s;
 }
-button:hover { transform: scale(1.03); }
+button:hover { transform: scale(1.03); box-shadow: 0 0 15px #22c55e; }
 
 .small-btn { background:#ef4444; font-size:12px; padding:6px; }
 .complete-btn { background:#22c55e; }
@@ -54,15 +55,15 @@ button:hover { transform: scale(1.03); }
 .day-btn { background:#334155; }
 input { width:100%; padding:10px; border-radius:10px; border:none; margin-top:10px; }
 .stat { font-size:16px; margin:5px 0; }
-.confetti { position: fixed; width: 8px; height: 8px; animation: fall 1s linear; }
+.confetti { position: fixed; width: 8px; height: 8px; animation: fall 1s linear; border-radius:50%; }
 @keyframes fall { to { transform: translateY(600px) rotate(360deg); opacity:0; } }
 </style>
 </head>
-
 <body>
 <div class="container" id="app"></div>
 
 <script>
+window.onload = function() {
 let screen="home";
 let selectedDay=null;
 let selectedWorkout=null;
@@ -79,6 +80,7 @@ function selectWorkout(index){ selectedWorkout=index; screen="workoutDetail"; re
 
 function render(){
 const app=document.getElementById("app");
+if(!app) return;
 
 if(screen==="home"){
 app.innerHTML=`<h1>⚡ TRAINING ULTIMATE</h1>
@@ -120,7 +122,7 @@ app.innerHTML=`<h1>${selectedDay}</h1>${list}<button class="back" onclick="go('t
 }
 
 if(screen==="workoutDetail"){
-let workout=workouts[selectedDay][selectedWorkout];
+let workout=workouts[selectedDay][selectedWorkout]||{name:"Økt ikke funnet", details:""};
 app.innerHTML=`<h1>${workout.name}</h1>
 <div class="card">${workout.details||"Ingen detaljer lagt til."}</div>
 <button class="back" onclick="screen='day'; render()">⬅️ Back</button>`;
@@ -171,7 +173,9 @@ function complete(i){ workouts[selectedDay][i].done=true; save(); confetti(); re
 function setDetails(i,v){ workouts[selectedDay][i].details=v; save(); }
 function setForm(v){ formScore=v; render(); }
 function confetti(){for(let i=0;i<30;i++){let c=document.createElement("div");c.className="confetti";c.style.left=Math.random()*100+"%";c.style.background=`hsl(${Math.random()*360},100%,50%)`;document.body.appendChild(c);setTimeout(()=>c.remove(),1200);}}
+
 render();
+};
 </script>
 </body>
 </html>
