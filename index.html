@@ -5,21 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Training App Ultimate</title>
 <style>
-  body {margin:0;font-family:Arial,sans-serif;background:linear-gradient(160deg,#0f172a,#020617);color:white;min-height:100vh;}
-  .container{padding:20px;max-width:500px;margin:auto;display:flex;flex-direction:column;gap:15px;}
-  h1{text-align:center;}
-  .card{background:rgba(30,41,59,0.9);padding:15px;border-radius:15px;margin-bottom:10px;box-shadow:0 0 15px rgba(37,99,235,0.3);}
-  button{width:100%;padding:14px;margin-top:8px;border:none;border-radius:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;font-size:16px;cursor:pointer;transition:transform 0.1s,box-shadow 0.2s;}
-  button:hover{transform:scale(1.03);box-shadow:0 0 15px #22c55e;}
-  .small-btn{background:#ef4444;font-size:12px;padding:6px;margin-top:5px;}
-  .complete-btn{background:#22c55e;margin-top:5px;}
-  .back{background:#475569;margin-top:10px;}
-  .day-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .day-btn{background:#334155;padding:10px;border-radius:8px;font-weight:bold;}
-  input{width:100%;padding:10px;border-radius:10px;border:none;margin-top:10px;}
-  .stat{font-size:16px;margin:5px 0;}
-  .confetti{position:fixed;width:8px;height:8px;animation:fall 1s linear;border-radius:50%;z-index:9999;}
-  @keyframes fall{to{transform:translateY(600px) rotate(360deg);opacity:0;}}
+body {margin:0;font-family:Arial,sans-serif;background:linear-gradient(160deg,#0f172a,#020617);color:white;min-height:100vh;}
+.container{padding:20px;max-width:500px;margin:auto;display:flex;flex-direction:column;gap:15px;}
+h1{text-align:center;}
+.card{background:rgba(30,41,59,0.9);padding:15px;border-radius:15px;margin-bottom:10px;box-shadow:0 0 15px rgba(37,99,235,0.3);}
+button{width:100%;padding:14px;margin-top:8px;border:none;border-radius:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;font-size:16px;cursor:pointer;transition:transform 0.1s,box-shadow 0.2s;}
+button:hover{transform:scale(1.03);box-shadow:0 0 15px #22c55e;}
+.small-btn{background:#ef4444;font-size:12px;padding:6px;margin-top:5px;}
+.complete-btn{background:#22c55e;margin-top:5px;}
+.back{background:#475569;margin-top:10px;}
+.day-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.day-btn{background:#334155;padding:10px;border-radius:8px;font-weight:bold;}
+input{width:100%;padding:10px;border-radius:10px;border:none;margin-top:10px;}
+.stat{font-size:16px;margin:5px 0;}
+.confetti{position:fixed;width:8px;height:8px;animation:fall 1s linear;border-radius:50%;z-index:9999;}
+.exercise-list{margin:5px 0;padding-left:15px;}
+@keyframes fall{to{transform:translateY(600px) rotate(360deg);opacity:0;}}
 </style>
 </head>
 <body>
@@ -36,19 +37,34 @@
   window.selectDay = function(day){ selectedDay=day; screen='day'; render(); }
   window.selectWorkout = function(i){ selectedWorkout=i; screen='workoutDetail'; render(); }
   window.editDay = function(day){ selectedDay=day; screen='editDay'; render(); }
+  
   window.addWorkout = function(){
     const name=document.getElementById('input');
     const details=document.getElementById('detailsInput');
     if(!name||!name.value) return;
     workouts[selectedDay]=workouts[selectedDay]||[];
-    workouts[selectedDay].push({name:name.value,details:details?details.value:'',done:false});
+    workouts[selectedDay].push({name:name.value,details:details?details.value:'',done:false,exercises:[]});
     if(name) name.value=''; if(details) details.value='';
     save(); render();
   }
+
+  window.addExercise=function(index){
+    const exInput=document.getElementById('exerciseInput'+index);
+    if(!exInput||!exInput.value) return;
+    workouts[selectedDay][index].exercises.push(exInput.value);
+    exInput.value='';
+    save(); render();
+  }
+
   window.deleteWorkout = function(i){ if(workouts[selectedDay]){ workouts[selectedDay].splice(i,1); save(); render(); } }
   window.complete = function(i){ if(workouts[selectedDay]&&workouts[selectedDay][i]){ workouts[selectedDay][i].done=true; save(); confetti(); render(); } }
   window.setDetails = function(i,v){ if(workouts[selectedDay]&&workouts[selectedDay][i]){ workouts[selectedDay][i].details=v; save(); } }
   window.setForm = function(v){ formScore=v; save(); render(); }
+
+  window.resetWeek = function(){
+    Object.keys(workouts).forEach(d=>{ workouts[d].forEach(w=>w.done=false); });
+    save(); render();
+  }
 
   function save(){ localStorage.setItem('workouts',JSON.stringify(workouts)); localStorage.setItem('formScore',formScore); }
 
@@ -75,6 +91,7 @@
             <button onclick="go('training')">🏋️ Training</button>
             <button onclick="go('edit')">✏️ Edit</button>
             <button onclick="go('progress')">📈 Weekly Progress</button>
+            <button onclick="resetWeek()" style="margin-top:10px;">🔄 Reset Week</button>
           </div>`; break;
 
       case 'profile':
@@ -102,16 +119,20 @@
         const dayList=(workouts[selectedDay]||[]).map((w,i)=>`
           <div class="card">
             ${w.done?'✅':'🔥'} ${w.name}
-            ${w.name!=='Ingen økter...'?
-              `<button class="complete-btn" onclick="complete(${i})">✔ Fullfør</button>
-               <button class="small-btn" onclick="selectWorkout(${i})">ℹ️ Se detaljer</button>`:''
-            }
+            <button class="complete-btn" onclick="complete(${i})">✔ Fullfør</button>
+            <button class="small-btn" onclick="selectWorkout(${i})">ℹ️ Se detaljer</button>
           </div>`).join('')||'<p>Ingen økter...</p>';
         app.innerHTML=`<h1>${selectedDay}</h1>${dayList}<button class="back" onclick="go('training')">⬅️ Back</button>`; break;
 
       case 'workoutDetail':
-        const w=(workouts[selectedDay]||[])[selectedWorkout]||{name:'Økt ikke funnet',details:''};
-        app.innerHTML=`<h1>${w.name}</h1><div class="card">${w.details||'Ingen detaljer lagt til.'}</div><button class="back" onclick="screen='day'; render()">⬅️ Back</button>`; break;
+        const w=(workouts[selectedDay]||[])[selectedWorkout]||{name:'Økt ikke funnet',details:'',exercises:[]};
+        app.innerHTML=`
+          <h1>${w.name}</h1>
+          <div class="card">
+            ${w.details||'Ingen detaljer lagt til.'}
+            ${w.exercises.length>0?'<ul class="exercise-list">'+w.exercises.map(e=>`<li>${e}</li>`).join('')+'</ul>':''}
+          </div>
+          <button class="back" onclick="screen='day'; render()">⬅️ Back</button>`; break;
 
       case 'edit':
         app.innerHTML=`
@@ -127,12 +148,15 @@
             🔥 ${w.name}
             <button class="small-btn" onclick="deleteWorkout(${i})">❌ Slett</button>
             <input placeholder="Detaljer..." value="${w.details||''}" onchange="setDetails(${i},this.value)">
+            <input id="exerciseInput${i}" placeholder="Ny øvelse (f.eks. Box Jumps)">
+            <button onclick="addExercise(${i})">➕ Legg til øvelse</button>
+            ${w.exercises.length>0?'<ul class="exercise-list">'+w.exercises.map(e=>`<li>${e}</li>`).join('')+'</ul>':''}
           </div>`).join('');
         app.innerHTML=`
           <h1>${selectedDay}</h1>${editList}
           <input id="input" placeholder="Ny økt...">
           <input id="detailsInput" placeholder="Detaljer...">
-          <button onclick="addWorkout()">➕ Legg til</button>
+          <button onclick="addWorkout()">➕ Legg til økt</button>
           <button class="back" onclick="go('edit')">⬅️ Back</button>`; break;
 
       case 'progress':
