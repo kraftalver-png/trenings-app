@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Treningsapp</title>
+<title>Training App Pro</title>
 
 <style>
 body {
@@ -42,6 +42,13 @@ button {
   cursor: pointer;
 }
 
+.small-btn {
+  background: #ef4444;
+  margin-top: 5px;
+  padding: 8px;
+  font-size: 12px;
+}
+
 .day-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -63,28 +70,29 @@ input {
   border: none;
   margin-top: 10px;
 }
+
+.stat {
+  font-size: 18px;
+  margin: 5px 0;
+}
 </style>
 </head>
 
 <body>
-
 <div class="container" id="app"></div>
 
 <script>
 let screen = "home";
 let selectedDay = null;
 
-let workouts = {
-  Monday: [],
-  Tuesday: [],
-  Wednesday: [],
-  Thursday: [],
-  Friday: [],
-  Saturday: [],
-  Sunday: []
+let workouts = JSON.parse(localStorage.getItem("workouts")) || {
+  Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: []
 };
 
-// NAVIGASJON
+function save() {
+  localStorage.setItem("workouts", JSON.stringify(workouts));
+}
+
 function go(s) {
   screen = s;
   render();
@@ -96,15 +104,12 @@ function selectDay(day) {
   render();
 }
 
-// RENDER
 function render() {
   const app = document.getElementById("app");
 
-  // HOME
   if (screen === "home") {
     app.innerHTML = `
       <h1>⚽ Training App</h1>
-
       <div class="card">
         <button onclick="go('profile')">📊 Profile</button>
         <button onclick="go('training')">🏋️ Training</button>
@@ -113,113 +118,99 @@ function render() {
     `;
   }
 
-  // PROFILE
   if (screen === "profile") {
+    let total = Object.values(workouts).flat().length;
+
     app.innerHTML = `
       <h1>📊 Profile</h1>
-
       <div class="card">
-        <p>Stats kommer snart...</p>
+        <p class="stat">🔥 Totale økter: ${total}</p>
+        <p class="stat">📅 Dager brukt: ${Object.keys(workouts).filter(d => workouts[d].length > 0).length}</p>
       </div>
-
       <button class="back" onclick="go('home')">⬅️ Back</button>
     `;
   }
 
-  // TRAINING (VELG DAG)
   if (screen === "training") {
     let days = Object.keys(workouts).map(day => `
-      <button class="day-btn" onclick="selectDay('${day}')">
-        📅 ${day}
-      </button>
+      <button class="day-btn" onclick="selectDay('${day}')">📅 ${day}</button>
     `).join("");
 
     app.innerHTML = `
       <h1>🏋️ Training</h1>
-
-      <div class="card day-grid">
-        ${days}
-      </div>
-
+      <div class="card day-grid">${days}</div>
       <button class="back" onclick="go('home')">⬅️ Back</button>
     `;
   }
 
-  // VIS DAG
   if (screen === "day") {
-    let list = workouts[selectedDay].map(w => `
-      <div class="card">🔥 ${w}</div>
+    let list = workouts[selectedDay].map((w, i) => `
+      <div class="card">
+        🔥 ${w}
+        <button class="small-btn" onclick="deleteWorkout(${i})">❌ Slett</button>
+      </div>
     `).join("");
 
-    if (list === "") {
-      list = `<p>Ingen økter enda...</p>`;
-    }
+    if (!list) list = "<p>Ingen økter enda...</p>";
 
     app.innerHTML = `
       <h1>📅 ${selectedDay}</h1>
-
       ${list}
-
-      <button class="back" onclick="go('training')">⬅️ Back</button>
+      <button onclick="go('training')">⬅️ Back</button>
     `;
   }
 
-  // EDIT
   if (screen === "edit") {
     let days = Object.keys(workouts).map(day => `
-      <button class="day-btn" onclick="editDay('${day}')">
-        ✏️ ${day}
-      </button>
+      <button class="day-btn" onclick="editDay('${day}')">✏️ ${day}</button>
     `).join("");
 
     app.innerHTML = `
       <h1>✏️ Edit</h1>
-
-      <div class="card day-grid">
-        ${days}
-      </div>
-
+      <div class="card day-grid">${days}</div>
       <button class="back" onclick="go('home')">⬅️ Back</button>
     `;
   }
 
-  // EDIT DAG
   if (screen === "editDay") {
-    let list = workouts[selectedDay].map(w => `
-      <div class="card">🔥 ${w}</div>
+    let list = workouts[selectedDay].map((w, i) => `
+      <div class="card">
+        🔥 ${w}
+        <button class="small-btn" onclick="deleteWorkout(${i})">❌ Slett</button>
+      </div>
     `).join("");
 
     app.innerHTML = `
       <h1>✏️ ${selectedDay}</h1>
-
       ${list}
-
       <input id="input" placeholder="Ny økt..." />
       <button onclick="addWorkout()">➕ Legg til</button>
-
       <button class="back" onclick="go('edit')">⬅️ Back</button>
     `;
   }
 }
 
-// EDIT DAG NAV
 function editDay(day) {
   selectedDay = day;
   screen = "editDay";
   render();
 }
 
-// LEGG TIL ØKT
 function addWorkout() {
   const input = document.getElementById("input");
   if (!input.value) return;
-
   workouts[selectedDay].push(input.value);
   input.value = "";
+  save();
   render();
 }
 
-// START
+function deleteWorkout(index) {
+  workouts[selectedDay].splice(index, 1);
+  save();
+  render();
+}
+
 render();
 </script>
 
