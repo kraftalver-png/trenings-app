@@ -12,7 +12,6 @@ body {
   color: white;
   min-height: 100vh;
 }
-
 .container {
   padding: 20px;
   max-width: 500px;
@@ -21,7 +20,6 @@ body {
   flex-direction: column;
   gap: 15px;
 }
-
 h1 { text-align: center; }
 .card {
   background: rgba(30,41,59,0.85);
@@ -29,7 +27,6 @@ h1 { text-align: center; }
   border-radius: 15px;
   box-shadow: 0 0 15px rgba(37,99,235,0.3);
 }
-
 button {
   width: 100%;
   padding: 14px;
@@ -43,7 +40,6 @@ button {
   transition: transform 0.1s, box-shadow 0.2s;
 }
 button:hover { transform: scale(1.03); box-shadow: 0 0 15px #22c55e; }
-
 .small-btn { background:#ef4444; font-size:12px; padding:6px; }
 .complete-btn { background:#22c55e; }
 .back { background:#475569; }
@@ -61,9 +57,8 @@ input { width:100%; padding:10px; border-radius:10px; border:none; margin-top:10
 </head>
 <body>
 <div class="container" id="app"></div>
-
 <script>
-window.onload = function() {
+document.addEventListener('DOMContentLoaded', function() {
 let screen="home";
 let selectedDay=null;
 let selectedWorkout=null;
@@ -82,6 +77,7 @@ function render(){
 const app=document.getElementById("app");
 if(!app) return;
 
+try {
 if(screen==="home"){
 app.innerHTML=`<h1>⚡ TRAINING ULTIMATE</h1>
 <div class="card">
@@ -91,8 +87,7 @@ app.innerHTML=`<h1>⚡ TRAINING ULTIMATE</h1>
 <button onclick="go('progress')">📈 Weekly Progress</button>
 </div>`;
 }
-
-if(screen==="profile"){
+else if(screen==="profile"){
 let total=Object.values(workouts).flat().length;
 let completed=Object.values(workouts).flat().filter(w=>w.done).length;
 app.innerHTML=`<h1>📊 Profile</h1>
@@ -104,13 +99,11 @@ app.innerHTML=`<h1>📊 Profile</h1>
 <input type="range" min="1" max="10" value="${formScore}" onchange="setForm(this.value)">
 <button class="back" onclick="go('home')">⬅️ Back</button>`;
 }
-
-if(screen==="training"){
+else if(screen==="training"){
 let days=Object.keys(workouts).map(d=>`<button class="day-btn" onclick="selectDay('${d}')">📅 ${d}</button>`).join("");
 app.innerHTML=`<h1>🏋️ Training</h1><div class="card day-grid">${days}</div><button class="back" onclick="go('home')">⬅️ Back</button>`;
 }
-
-if(screen==="day"){
+else if(screen==="day"){
 let list=workouts[selectedDay].map((w,i)=>`
 <div class="card">
 ${w.done?"✅":"🔥"} ${w.name}
@@ -120,21 +113,18 @@ ${w.done?"✅":"🔥"} ${w.name}
 if(!list) list="<p>Ingen økter...</p>";
 app.innerHTML=`<h1>${selectedDay}</h1>${list}<button class="back" onclick="go('training')">⬅️ Back</button>`;
 }
-
-if(screen==="workoutDetail"){
-let workout=workouts[selectedDay][selectedWorkout]||{name:"Økt ikke funnet", details:""};
+else if(screen==="workoutDetail"){
+let workout=(workouts[selectedDay]&&workouts[selectedDay][selectedWorkout])||{name:"Økt ikke funnet", details:""};
 app.innerHTML=`<h1>${workout.name}</h1>
 <div class="card">${workout.details||"Ingen detaljer lagt til."}</div>
 <button class="back" onclick="screen='day'; render()">⬅️ Back</button>`;
 }
-
-if(screen==="edit"){
+else if(screen==="edit"){
 let days=Object.keys(workouts).map(d=>`<button class="day-btn" onclick="editDay('${d}')">✏️ ${d}</button>`).join("");
 app.innerHTML=`<h1>Edit</h1><div class="card day-grid">${days}</div><button class="back" onclick="go('home')">⬅️ Back</button>`;
 }
-
-if(screen==="editDay"){
-let list=workouts[selectedDay].map((w,i)=>`
+else if(screen==="editDay"){
+let list=(workouts[selectedDay]||[]).map((w,i)=>`
 <div class="card">🔥 ${w.name}
 <button class="small-btn" onclick="deleteWorkout(${i})">❌ Slett</button>
 <input placeholder='Detaljer...' value='${w.details||""}' onchange='setDetails(${i},this.value)'></div>`).join("");
@@ -144,8 +134,7 @@ app.innerHTML=`<h1>${selectedDay}</h1>${list}
 <button onclick="addWorkout()">➕ Legg til</button>
 <button class="back" onclick="go('edit')">⬅️ Back</button>`;
 }
-
-if(screen==="progress"){
+else if(screen==="progress"){
 let completed=Object.values(workouts).flat().filter(w=>w.done).length;
 let total=Object.values(workouts).flat().length;
 let percent=total?Math.round((completed/total)*100):0;
@@ -159,23 +148,30 @@ app.innerHTML=`<h1>📈 Weekly Progress</h1>
 </div>
 <button class="back" onclick="go('home')">⬅️ Back</button>`;
 }
+} catch(e){
+app.innerHTML=`<h1>Feil i appen</h1><p>${e}</p>`;
+console.error(e);
+}
+}
 
 function editDay(day){ selectedDay=day; screen="editDay"; render(); }
 function addWorkout(){
 const name=document.getElementById("input");
 const details=document.getElementById("detailsInput");
-if(!name.value) return;
-workouts[selectedDay].push({name:name.value, details:details.value, done:false});
-name.value=""; details.value=""; save(); render();
+if(!name || !name.value) return;
+workouts[selectedDay].push({name:name.value, details:details?details.value:"", done:false});
+if(name) name.value="";
+if(details) details.value="";
+save(); render();
 }
-function deleteWorkout(i){ workouts[selectedDay].splice(i,1); save(); render(); }
-function complete(i){ workouts[selectedDay][i].done=true; save(); confetti(); render(); }
-function setDetails(i,v){ workouts[selectedDay][i].details=v; save(); }
+function deleteWorkout(i){ if(workouts[selectedDay]){ workouts[selectedDay].splice(i,1); save(); render(); } }
+function complete(i){ if(workouts[selectedDay]&&workouts[selectedDay][i]){ workouts[selectedDay][i].done=true; save(); confetti(); render(); } }
+function setDetails(i,v){ if(workouts[selectedDay]&&workouts[selectedDay][i]){ workouts[selectedDay][i].details=v; save(); } }
 function setForm(v){ formScore=v; render(); }
 function confetti(){for(let i=0;i<30;i++){let c=document.createElement("div");c.className="confetti";c.style.left=Math.random()*100+"%";c.style.background=`hsl(${Math.random()*360},100%,50%)`;document.body.appendChild(c);setTimeout(()=>c.remove(),1200);}}
 
 render();
-};
+});
 </script>
 </body>
 </html>
