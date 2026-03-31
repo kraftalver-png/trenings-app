@@ -5,78 +5,52 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Training App Ultimate</title>
 <style>
-  body {
-    margin: 0;
-    font-family: 'Arial', sans-serif;
-    background: linear-gradient(160deg,#0f172a,#020617);
-    color: white;
-    min-height: 100vh;
-  }
-  .container {
-    padding: 20px;
-    max-width: 500px;
-    margin: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-  h1 { text-align: center; }
-  .card {
-    background: rgba(30,41,59,0.9);
-    padding: 15px;
-    border-radius: 15px;
-    margin-bottom: 10px;
-    box-shadow: 0 0 15px rgba(37,99,235,0.3);
-  }
-  button {
-    width: 100%;
-    padding: 14px;
-    margin-top: 8px;
-    border: none;
-    border-radius: 12px;
-    background: linear-gradient(135deg,#2563eb,#1d4ed8);
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.2s;
-  }
-  button:hover { transform: scale(1.03); box-shadow: 0 0 15px #22c55e; }
-  .small-btn { background:#ef4444; font-size:12px; padding:6px; margin-top:5px; }
-  .complete-btn { background:#22c55e; margin-top:5px; }
-  .back { background:#475569; margin-top:10px; }
-  .day-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .day-btn { background:#334155; padding:10px; border-radius:8px; font-weight:bold; }
-  input { width:100%; padding:10px; border-radius:10px; border:none; margin-top:10px; }
-  .stat { font-size:16px; margin:5px 0; }
-  .confetti {
-    position: fixed;
-    width: 8px;
-    height: 8px;
-    animation: fall 1s linear;
-    border-radius:50%;
-    z-index:9999;
-  }
-  @keyframes fall { to { transform: translateY(600px) rotate(360deg); opacity:0; } }
+  body {margin:0;font-family:Arial,sans-serif;background:linear-gradient(160deg,#0f172a,#020617);color:white;min-height:100vh;}
+  .container{padding:20px;max-width:500px;margin:auto;display:flex;flex-direction:column;gap:15px;}
+  h1{text-align:center;}
+  .card{background:rgba(30,41,59,0.9);padding:15px;border-radius:15px;margin-bottom:10px;box-shadow:0 0 15px rgba(37,99,235,0.3);}
+  button{width:100%;padding:14px;margin-top:8px;border:none;border-radius:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;font-size:16px;cursor:pointer;transition:transform 0.1s,box-shadow 0.2s;}
+  button:hover{transform:scale(1.03);box-shadow:0 0 15px #22c55e;}
+  .small-btn{background:#ef4444;font-size:12px;padding:6px;margin-top:5px;}
+  .complete-btn{background:#22c55e;margin-top:5px;}
+  .back{background:#475569;margin-top:10px;}
+  .day-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .day-btn{background:#334155;padding:10px;border-radius:8px;font-weight:bold;}
+  input{width:100%;padding:10px;border-radius:10px;border:none;margin-top:10px;}
+  .stat{font-size:16px;margin:5px 0;}
+  .confetti{position:fixed;width:8px;height:8px;animation:fall 1s linear;border-radius:50%;z-index:9999;}
+  @keyframes fall{to{transform:translateY(600px) rotate(360deg);opacity:0;}}
 </style>
 </head>
 <body>
 <div class="container" id="app"></div>
 <script>
 (function(){
-  let screen = 'home';
-  let selectedDay = null;
-  let selectedWorkout = null;
-  const initialWorkouts = { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: [] };
-  const workouts = JSON.parse(localStorage.getItem('workouts')) || initialWorkouts;
-  let formScore = parseInt(localStorage.getItem('formScore')) || 5;
+  let screen='home', selectedDay=null, selectedWorkout=null;
+  const initialWorkouts={Monday:[],Tuesday:[],Wednesday:[],Thursday:[],Friday:[],Saturday:[],Sunday:[]};
+  const workouts=JSON.parse(localStorage.getItem('workouts'))||initialWorkouts;
+  let formScore=parseInt(localStorage.getItem('formScore'))||5;
 
-  function save() { 
-    localStorage.setItem('workouts', JSON.stringify(workouts));
-    localStorage.setItem('formScore', formScore);
+  // --- Globale funksjoner ---
+  window.go = function(s){ screen=s; render(); }
+  window.selectDay = function(day){ selectedDay=day; screen='day'; render(); }
+  window.selectWorkout = function(i){ selectedWorkout=i; screen='workoutDetail'; render(); }
+  window.editDay = function(day){ selectedDay=day; screen='editDay'; render(); }
+  window.addWorkout = function(){
+    const name=document.getElementById('input');
+    const details=document.getElementById('detailsInput');
+    if(!name||!name.value) return;
+    workouts[selectedDay]=workouts[selectedDay]||[];
+    workouts[selectedDay].push({name:name.value,details:details?details.value:'',done:false});
+    if(name) name.value=''; if(details) details.value='';
+    save(); render();
   }
-  function go(s){ screen=s; render(); }
-  function selectDay(day){ selectedDay=day; screen='day'; render(); }
-  function selectWorkout(i){ selectedWorkout=i; screen='workoutDetail'; render(); }
+  window.deleteWorkout = function(i){ if(workouts[selectedDay]){ workouts[selectedDay].splice(i,1); save(); render(); } }
+  window.complete = function(i){ if(workouts[selectedDay]&&workouts[selectedDay][i]){ workouts[selectedDay][i].done=true; save(); confetti(); render(); } }
+  window.setDetails = function(i,v){ if(workouts[selectedDay]&&workouts[selectedDay][i]){ workouts[selectedDay][i].details=v; save(); } }
+  window.setForm = function(v){ formScore=v; save(); render(); }
+
+  function save(){ localStorage.setItem('workouts',JSON.stringify(workouts)); localStorage.setItem('formScore',formScore); }
 
   function confetti(){
     for(let i=0;i<30;i++){
@@ -101,8 +75,7 @@
             <button onclick="go('training')">🏋️ Training</button>
             <button onclick="go('edit')">✏️ Edit</button>
             <button onclick="go('progress')">📈 Weekly Progress</button>
-          </div>`;
-        break;
+          </div>`; break;
 
       case 'profile':
         const total = Object.values(workouts).flat().length;
@@ -115,8 +88,7 @@
             <p class="stat">⚡ Form: ${formScore}/10</p>
           </div>
           <input type="range" min="1" max="10" value="${formScore}" onchange="setForm(this.value)">
-          <button class="back" onclick="go('home')">⬅️ Back</button>`;
-        break;
+          <button class="back" onclick="go('home')">⬅️ Back</button>`; break;
 
       case 'training':
         app.innerHTML=`
@@ -124,25 +96,22 @@
           <div class="card day-grid">
             ${Object.keys(workouts).map(d=>`<button class="day-btn" onclick="selectDay('${d}')">📅 ${d}</button>`).join('')}
           </div>
-          <button class="back" onclick="go('home')">⬅️ Back</button>`;
-        break;
+          <button class="back" onclick="go('home')">⬅️ Back</button>`; break;
 
       case 'day':
-        const dayList = (workouts[selectedDay] || []).map((w,i)=>`
+        const dayList=(workouts[selectedDay]||[]).map((w,i)=>`
           <div class="card">
             ${w.done?'✅':'🔥'} ${w.name}
             ${w.name!=='Ingen økter...'?
               `<button class="complete-btn" onclick="complete(${i})">✔ Fullfør</button>
-               <button class="small-btn" onclick="selectWorkout(${i})">ℹ️ Se detaljer</button>` : ''
+               <button class="small-btn" onclick="selectWorkout(${i})">ℹ️ Se detaljer</button>`:''
             }
-          </div>`).join('') || '<p>Ingen økter...</p>';
-        app.innerHTML=`<h1>${selectedDay}</h1>${dayList}<button class="back" onclick="go('training')">⬅️ Back</button>`;
-        break;
+          </div>`).join('')||'<p>Ingen økter...</p>';
+        app.innerHTML=`<h1>${selectedDay}</h1>${dayList}<button class="back" onclick="go('training')">⬅️ Back</button>`; break;
 
       case 'workoutDetail':
-        const w = (workouts[selectedDay]||[])[selectedWorkout]||{name:'Økt ikke funnet',details:''};
-        app.innerHTML=`<h1>${w.name}</h1><div class="card">${w.details||'Ingen detaljer lagt til.'}</div><button class="back" onclick="screen='day'; render()">⬅️ Back</button>`;
-        break;
+        const w=(workouts[selectedDay]||[])[selectedWorkout]||{name:'Økt ikke funnet',details:''};
+        app.innerHTML=`<h1>${w.name}</h1><div class="card">${w.details||'Ingen detaljer lagt til.'}</div><button class="back" onclick="screen='day'; render()">⬅️ Back</button>`; break;
 
       case 'edit':
         app.innerHTML=`
@@ -150,8 +119,7 @@
           <div class="card day-grid">
             ${Object.keys(workouts).map(d=>`<button class="day-btn" onclick="editDay('${d}')">✏️ ${d}</button>`).join('')}
           </div>
-          <button class="back" onclick="go('home')">⬅️ Back</button>`;
-        break;
+          <button class="back" onclick="go('home')">⬅️ Back</button>`; break;
 
       case 'editDay':
         const editList=(workouts[selectedDay]||[]).map((w,i)=>`
@@ -165,8 +133,7 @@
           <input id="input" placeholder="Ny økt...">
           <input id="detailsInput" placeholder="Detaljer...">
           <button onclick="addWorkout()">➕ Legg til</button>
-          <button class="back" onclick="go('edit')">⬅️ Back</button>`;
-        break;
+          <button class="back" onclick="go('edit')">⬅️ Back</button>`; break;
 
       case 'progress':
         const all = Object.values(workouts).flat();
@@ -177,31 +144,14 @@
           <h1>📈 Weekly Progress</h1>
           <div class="card">
             <p>Fullført: ${comp}/${tot} økter</p>
-            <div style="background:#334155; border-radius:10px; overflow:hidden; height:20px; margin-top:10px;">
-              <div style="width:${percent}%; background:#22c55e; height:100%;"></div>
+            <div style="background:#334155;border-radius:10px;overflow:hidden;height:20px;margin-top:10px;">
+              <div style="width:${percent}%;background:#22c55e;height:100%;"></div>
             </div>
             <p>${percent}% ferdig</p>
           </div>
-          <button class="back" onclick="go('home')">⬅️ Back</button>`;
-        break;
+          <button class="back" onclick="go('home')">⬅️ Back</button>`; break;
     }
   }
-
-  // Globale funksjoner
-  window.editDay = function(day){ selectedDay=day; screen='editDay'; render(); }
-  window.addWorkout = function(){
-    const name=document.getElementById('input');
-    const details=document.getElementById('detailsInput');
-    if(!name||!name.value) return;
-    workouts[selectedDay]=workouts[selectedDay]||[];
-    workouts[selectedDay].push({name:name.value,details:details?details.value:'',done:false});
-    if(name) name.value=''; if(details) details.value='';
-    save(); render();
-  }
-  window.deleteWorkout = function(i){ if(workouts[selectedDay]){ workouts[selectedDay].splice(i,1); save(); render(); } }
-  window.complete = function(i){ if(workouts[selectedDay]&&workouts[selectedDay][i]){ workouts[selectedDay][i].done=true; save(); confetti(); render(); } }
-  window.setDetails = function(i,v){ if(workouts[selectedDay]&&workouts[selectedDay][i]){ workouts[selectedDay][i].details=v; save(); } }
-  window.setForm = function(v){ formScore=v; save(); render(); }
 
   render();
 })();
