@@ -1,144 +1,226 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8">
-  <title>Treningsapp</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #0f172a;
-      color: white;
-      text-align: center;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Treningsapp</title>
 
-    .container {
-      padding: 20px;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: white;
+}
 
-    h1 {
-      margin-bottom: 20px;
-    }
+.container {
+  padding: 20px;
+  max-width: 500px;
+  margin: auto;
+}
 
-    button {
-      display: block;
-      width: 80%;
-      margin: 10px auto;
-      padding: 15px;
-      border: none;
-      border-radius: 10px;
-      background-color: #2563eb;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
+h1 {
+  text-align: center;
+}
 
-    .day-btn {
-      background-color: #1e293b;
-    }
+.card {
+  background: #1e293b;
+  padding: 15px;
+  border-radius: 15px;
+  margin-bottom: 15px;
+}
 
-    input {
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      width: 80%;
-      margin-top: 10px;
-    }
-  </style>
+button {
+  width: 100%;
+  padding: 15px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 12px;
+  background: #2563eb;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.day-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.day-btn {
+  background: #334155;
+}
+
+.back {
+  background: #475569;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  margin-top: 10px;
+}
+</style>
 </head>
+
 <body>
 
 <div class="container" id="app"></div>
 
 <script>
-  let screen = "home";
+let screen = "home";
+let selectedDay = null;
 
-  let workouts = {
-    Monday: [],
-    Tuesday: [],
-    Wednesday: [],
-    Thursday: [],
-    Friday: [],
-    Saturday: [],
-    Sunday: []
-  };
+let workouts = {
+  Monday: [],
+  Tuesday: [],
+  Wednesday: [],
+  Thursday: [],
+  Friday: [],
+  Saturday: [],
+  Sunday: []
+};
 
-  let selectedDay = "Monday";
-
-  function render() {
-    const app = document.getElementById("app");
-
-    if (screen === "home") {
-      app.innerHTML = `
-        <h1>My Training App</h1>
-        <button onclick="go('profile')">Profile</button>
-        <button onclick="go('training')">Training</button>
-        <button onclick="go('edit')">Edit</button>
-      `;
-    }
-
-    if (screen === "profile") {
-      app.innerHTML = `
-        <h1>Profile</h1>
-        <p>Stats kommer her senere</p>
-        <button onclick="go('home')">Back</button>
-      `;
-    }
-
-    if (screen === "training") {
-      let days = Object.keys(workouts).map(day =>
-        `<button class="day-btn" onclick="selectDay('${day}')">${day}</button>`
-      ).join("");
-
-      let list = workouts[selectedDay].map(w =>
-        `<p>- ${w}</p>`
-      ).join("");
-
-      app.innerHTML = `
-        <h1>Training</h1>
-        ${days}
-        <h2>${selectedDay}</h2>
-        ${list}
-        <button onclick="go('home')">Back</button>
-      `;
-    }
-
-    if (screen === "edit") {
-      let days = Object.keys(workouts).map(day =>
-        `<button class="day-btn" onclick="selectDay('${day}')">${day}</button>`
-      ).join("");
-
-      app.innerHTML = `
-        <h1>Edit</h1>
-        ${days}
-        <h2>Editing: ${selectedDay}</h2>
-        <input id="workoutInput" placeholder="Add workout..." />
-        <button onclick="addWorkout()">Add</button>
-        <button onclick="go('home')">Back</button>
-      `;
-    }
-  }
-
-  function go(s) {
-    screen = s;
-    render();
-  }
-
-  function selectDay(day) {
-    selectedDay = day;
-    render();
-  }
-
-  function addWorkout() {
-    const input = document.getElementById("workoutInput");
-    if (!input.value) return;
-
-    workouts[selectedDay].push(input.value);
-    input.value = "";
-    render();
-  }
-
+// NAVIGASJON
+function go(s) {
+  screen = s;
   render();
+}
+
+function selectDay(day) {
+  selectedDay = day;
+  screen = "day";
+  render();
+}
+
+// RENDER
+function render() {
+  const app = document.getElementById("app");
+
+  // HOME
+  if (screen === "home") {
+    app.innerHTML = `
+      <h1>⚽ Training App</h1>
+
+      <div class="card">
+        <button onclick="go('profile')">📊 Profile</button>
+        <button onclick="go('training')">🏋️ Training</button>
+        <button onclick="go('edit')">✏️ Edit</button>
+      </div>
+    `;
+  }
+
+  // PROFILE
+  if (screen === "profile") {
+    app.innerHTML = `
+      <h1>📊 Profile</h1>
+
+      <div class="card">
+        <p>Stats kommer snart...</p>
+      </div>
+
+      <button class="back" onclick="go('home')">⬅️ Back</button>
+    `;
+  }
+
+  // TRAINING (VELG DAG)
+  if (screen === "training") {
+    let days = Object.keys(workouts).map(day => `
+      <button class="day-btn" onclick="selectDay('${day}')">
+        📅 ${day}
+      </button>
+    `).join("");
+
+    app.innerHTML = `
+      <h1>🏋️ Training</h1>
+
+      <div class="card day-grid">
+        ${days}
+      </div>
+
+      <button class="back" onclick="go('home')">⬅️ Back</button>
+    `;
+  }
+
+  // VIS DAG
+  if (screen === "day") {
+    let list = workouts[selectedDay].map(w => `
+      <div class="card">🔥 ${w}</div>
+    `).join("");
+
+    if (list === "") {
+      list = `<p>Ingen økter enda...</p>`;
+    }
+
+    app.innerHTML = `
+      <h1>📅 ${selectedDay}</h1>
+
+      ${list}
+
+      <button class="back" onclick="go('training')">⬅️ Back</button>
+    `;
+  }
+
+  // EDIT
+  if (screen === "edit") {
+    let days = Object.keys(workouts).map(day => `
+      <button class="day-btn" onclick="editDay('${day}')">
+        ✏️ ${day}
+      </button>
+    `).join("");
+
+    app.innerHTML = `
+      <h1>✏️ Edit</h1>
+
+      <div class="card day-grid">
+        ${days}
+      </div>
+
+      <button class="back" onclick="go('home')">⬅️ Back</button>
+    `;
+  }
+
+  // EDIT DAG
+  if (screen === "editDay") {
+    let list = workouts[selectedDay].map(w => `
+      <div class="card">🔥 ${w}</div>
+    `).join("");
+
+    app.innerHTML = `
+      <h1>✏️ ${selectedDay}</h1>
+
+      ${list}
+
+      <input id="input" placeholder="Ny økt..." />
+      <button onclick="addWorkout()">➕ Legg til</button>
+
+      <button class="back" onclick="go('edit')">⬅️ Back</button>
+    `;
+  }
+}
+
+// EDIT DAG NAV
+function editDay(day) {
+  selectedDay = day;
+  screen = "editDay";
+  render();
+}
+
+// LEGG TIL ØKT
+function addWorkout() {
+  const input = document.getElementById("input");
+  if (!input.value) return;
+
+  workouts[selectedDay].push(input.value);
+  input.value = "";
+  render();
+}
+
+// START
+render();
 </script>
 
 </body>
