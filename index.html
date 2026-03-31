@@ -1,179 +1,145 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, FlatList, TextInput } from "react-native";
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <title>Treningsapp</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #0f172a;
+      color: white;
+      text-align: center;
+    }
 
-export default function App() {
-  const [screen, setScreen] = useState("home");
+    .container {
+      padding: 20px;
+    }
 
-  // Simple state for workouts
-  const [workouts, setWorkouts] = useState({
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    button {
+      display: block;
+      width: 80%;
+      margin: 10px auto;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      background-color: #2563eb;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .day-btn {
+      background-color: #1e293b;
+    }
+
+    input {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      width: 80%;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container" id="app"></div>
+
+<script>
+  let screen = "home";
+
+  let workouts = {
     Monday: [],
     Tuesday: [],
     Wednesday: [],
     Thursday: [],
     Friday: [],
     Saturday: [],
-    Sunday: [],
-  });
-
-  const [selectedDay, setSelectedDay] = useState("Monday");
-  const [newWorkout, setNewWorkout] = useState("");
-
-  const addWorkout = () => {
-    if (!newWorkout) return;
-    setWorkouts({
-      ...workouts,
-      [selectedDay]: [...workouts[selectedDay], newWorkout],
-    });
-    setNewWorkout("");
+    Sunday: []
   };
 
-  const renderHome = () => (
-    <View style={styles.container}>
-      <Text style={styles.title}>My Training App</Text>
+  let selectedDay = "Monday";
 
-      <TouchableOpacity style={styles.button} onPress={() => setScreen("profile")}>
-        <Text style={styles.buttonText}>Profile</Text>
-      </TouchableOpacity>
+  function render() {
+    const app = document.getElementById("app");
 
-      <TouchableOpacity style={styles.button} onPress={() => setScreen("training")}>
-        <Text style={styles.buttonText}>Training</Text>
-      </TouchableOpacity>
+    if (screen === "home") {
+      app.innerHTML = `
+        <h1>My Training App</h1>
+        <button onclick="go('profile')">Profile</button>
+        <button onclick="go('training')">Training</button>
+        <button onclick="go('edit')">Edit</button>
+      `;
+    }
 
-      <TouchableOpacity style={styles.button} onPress={() => setScreen("edit")}>
-        <Text style={styles.buttonText}>Edit</Text>
-      </TouchableOpacity>
-    </View>
-  );
+    if (screen === "profile") {
+      app.innerHTML = `
+        <h1>Profile</h1>
+        <p>Stats kommer her senere</p>
+        <button onclick="go('home')">Back</button>
+      `;
+    }
 
-  const renderProfile = () => (
-    <View style={styles.container}>
-      <Text style={styles.title}>Profile</Text>
-      <Text style={styles.text}>Stats will come here</Text>
+    if (screen === "training") {
+      let days = Object.keys(workouts).map(day =>
+        `<button class="day-btn" onclick="selectDay('${day}')">${day}</button>`
+      ).join("");
 
-      <TouchableOpacity style={styles.button} onPress={() => setScreen("home")}>
-        <Text style={styles.buttonText}>Back</Text>
-      </TouchableOpacity>
-    </View>
-  );
+      let list = workouts[selectedDay].map(w =>
+        `<p>- ${w}</p>`
+      ).join("");
 
-  const renderTraining = () => (
-    <View style={styles.container}>
-      <Text style={styles.title}>Training</Text>
+      app.innerHTML = `
+        <h1>Training</h1>
+        ${days}
+        <h2>${selectedDay}</h2>
+        ${list}
+        <button onclick="go('home')">Back</button>
+      `;
+    }
 
-      <FlatList
-        data={Object.keys(workouts)}
-        keyExtractor={(item) => item}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.dayButton}
-            onPress={() => setSelectedDay(item)}
-          >
-            <Text style={styles.buttonText}>{item}</Text>
-          </TouchableOpacity>
-        )}
-      />
+    if (screen === "edit") {
+      let days = Object.keys(workouts).map(day =>
+        `<button class="day-btn" onclick="selectDay('${day}')">${day}</button>`
+      ).join("");
 
-      <Text style={styles.subtitle}>{selectedDay}</Text>
+      app.innerHTML = `
+        <h1>Edit</h1>
+        ${days}
+        <h2>Editing: ${selectedDay}</h2>
+        <input id="workoutInput" placeholder="Add workout..." />
+        <button onclick="addWorkout()">Add</button>
+        <button onclick="go('home')">Back</button>
+      `;
+    }
+  }
 
-      <FlatList
-        data={workouts[selectedDay]}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
-          <Text style={styles.text}>- {item}</Text>
-        )}
-      />
+  function go(s) {
+    screen = s;
+    render();
+  }
 
-      <TouchableOpacity style={styles.button} onPress={() => setScreen("home")}>
-        <Text style={styles.buttonText}>Back</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  function selectDay(day) {
+    selectedDay = day;
+    render();
+  }
 
-  const renderEdit = () => (
-    <View style={styles.container}>
-      <Text style={styles.title}>Edit Training</Text>
+  function addWorkout() {
+    const input = document.getElementById("workoutInput");
+    if (!input.value) return;
 
-      <FlatList
-        data={Object.keys(workouts)}
-        keyExtractor={(item) => item}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.dayButton}
-            onPress={() => setSelectedDay(item)}
-          >
-            <Text style={styles.buttonText}>{item}</Text>
-          </TouchableOpacity>
-        )}
-      />
+    workouts[selectedDay].push(input.value);
+    input.value = "";
+    render();
+  }
 
-      <Text style={styles.subtitle}>Editing: {selectedDay}</Text>
+  render();
+</script>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Add workout..."
-        value={newWorkout}
-        onChangeText={setNewWorkout}
-      />
-
-      <TouchableOpacity style={styles.button} onPress={addWorkout}>
-        <Text style={styles.buttonText}>Add</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.button} onPress={() => setScreen("home")}>
-        <Text style={styles.buttonText}>Back</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  if (screen === "profile") return renderProfile();
-  if (screen === "training") return renderTraining();
-  if (screen === "edit") return renderEdit();
-
-  return renderHome();
-}
-
-const styles = {
-  container: {
-    flex: 1,
-    backgroundColor: "#0f172a",
-    padding: 20,
-  },
-  title: {
-    fontSize: 28,
-    color: "white",
-    marginBottom: 20,
-    fontWeight: "bold",
-  },
-  subtitle: {
-    fontSize: 20,
-    color: "white",
-    marginTop: 10,
-  },
-  text: {
-    color: "white",
-    marginVertical: 5,
-  },
-  button: {
-    backgroundColor: "#2563eb",
-    padding: 15,
-    borderRadius: 10,
-    marginVertical: 10,
-  },
-  dayButton: {
-    backgroundColor: "#1e293b",
-    padding: 10,
-    borderRadius: 8,
-    marginVertical: 5,
-  },
-  buttonText: {
-    color: "white",
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-  input: {
-    backgroundColor: "white",
-    padding: 10,
-    borderRadius: 8,
-    marginVertical: 10,
-  },
-};
+</body>
+</html>
