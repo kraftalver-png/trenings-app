@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Training App Pro X</title>
+<title>Training App Ultimate</title>
 
 <style>
 body {
@@ -39,7 +39,9 @@ button {
   color: white;
   font-size: 15px;
   cursor: pointer;
+  transition: transform 0.1s;
 }
+button:hover { transform: scale(1.03); }
 
 .small-btn { background:#ef4444; font-size:12px; padding:6px; }
 .complete-btn { background:#22c55e; }
@@ -52,7 +54,7 @@ button {
 .day-btn { background:#334155; }
 input { width:100%; padding:10px; border-radius:10px; border:none; margin-top:10px; }
 .stat { font-size:16px; margin:5px 0; }
-.confetti { position: fixed; width: 8px; height: 8px; background: red; animation: fall 1s linear; }
+.confetti { position: fixed; width: 8px; height: 8px; animation: fall 1s linear; }
 @keyframes fall { to { transform: translateY(600px) rotate(360deg); opacity:0; } }
 </style>
 </head>
@@ -79,11 +81,12 @@ function render(){
 const app=document.getElementById("app");
 
 if(screen==="home"){
-app.innerHTML=`<h1>⚡ TRAINING</h1>
+app.innerHTML=`<h1>⚡ TRAINING ULTIMATE</h1>
 <div class="card">
 <button onclick="go('profile')">📊 Profile</button>
 <button onclick="go('training')">🏋️ Training</button>
 <button onclick="go('edit')">✏️ Edit</button>
+<button onclick="go('progress')">📈 Weekly Progress</button>
 </div>`;
 }
 
@@ -135,10 +138,24 @@ let list=workouts[selectedDay].map((w,i)=>`
 <input placeholder='Detaljer...' value='${w.details||""}' onchange='setDetails(${i},this.value)'></div>`).join("");
 app.innerHTML=`<h1>${selectedDay}</h1>${list}
 <input id="input" placeholder="Ny økt...">
-<input id="detailsInput" placeholder="Detaljer (f.eks. 4x4 min intervall)">
+<input id="detailsInput" placeholder="Detaljer (f.eks. 4 min x 4 lengder)">
 <button onclick="addWorkout()">➕ Legg til</button>
 <button class="back" onclick="go('edit')">⬅️ Back</button>`;
 }
+
+if(screen==="progress"){
+let completed=Object.values(workouts).flat().filter(w=>w.done).length;
+let total=Object.values(workouts).flat().length;
+let percent=total?Math.round((completed/total)*100):0;
+app.innerHTML=`<h1>📈 Weekly Progress</h1>
+<div class="card">
+<p>Fullført: ${completed}/${total} økter</p>
+<div style="background:#334155; border-radius:10px; overflow:hidden; height:20px; margin-top:10px;">
+<div style="width:${percent}%; background:#22c55e; height:100%;"></div>
+</div>
+<p>${percent}% ferdig</p>
+</div>
+<button class="back" onclick="go('home')">⬅️ Back</button>`;
 }
 
 function editDay(day){ selectedDay=day; screen="editDay"; render(); }
@@ -153,7 +170,7 @@ function deleteWorkout(i){ workouts[selectedDay].splice(i,1); save(); render(); 
 function complete(i){ workouts[selectedDay][i].done=true; save(); confetti(); render(); }
 function setDetails(i,v){ workouts[selectedDay][i].details=v; save(); }
 function setForm(v){ formScore=v; render(); }
-function confetti(){for(let i=0;i<20;i++){let c=document.createElement("div");c.className="confetti";c.style.left=Math.random()*100+"%";c.style.background=`hsl(${Math.random()*360},100%,50%)`;document.body.appendChild(c);setTimeout(()=>c.remove(),1000);}}
+function confetti(){for(let i=0;i<30;i++){let c=document.createElement("div");c.className="confetti";c.style.left=Math.random()*100+"%";c.style.background=`hsl(${Math.random()*360},100%,50%)`;document.body.appendChild(c);setTimeout(()=>c.remove(),1200);}}
 render();
 </script>
 </body>
