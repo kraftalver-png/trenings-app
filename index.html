@@ -3,24 +3,62 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Training App Ultimate</title>
+<title>⚡ Training Ultimate Pro</title>
 <style>
-body {margin:0;font-family:Arial,sans-serif;background:linear-gradient(160deg,#0f172a,#020617);color:white;min-height:100vh;}
-.container{padding:20px;max-width:500px;margin:auto;display:flex;flex-direction:column;gap:15px;}
-h1{text-align:center;}
-.card{background:rgba(30,41,59,0.9);padding:15px;border-radius:15px;margin-bottom:10px;box-shadow:0 0 15px rgba(37,99,235,0.3);}
-button{width:100%;padding:14px;margin-top:8px;border:none;border-radius:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;font-size:16px;cursor:pointer;transition:transform 0.1s,box-shadow 0.2s;}
-button:hover{transform:scale(1.03);box-shadow:0 0 15px #22c55e;}
-.small-btn{background:#ef4444;font-size:12px;padding:6px;margin-top:5px;}
-.complete-btn{background:#22c55e;margin-top:5px;}
-.back{background:#475569;margin-top:10px;}
-.day-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.day-btn{background:#334155;padding:10px;border-radius:8px;font-weight:bold;}
-input{width:100%;padding:10px;border-radius:10px;border:none;margin-top:10px;}
-.stat{font-size:16px;margin:5px 0;}
-.confetti{position:fixed;width:8px;height:8px;animation:fall 1s linear;border-radius:50%;z-index:9999;}
-.exercise-list{margin:5px 0;padding-left:15px;}
-@keyframes fall{to{transform:translateY(600px) rotate(360deg);opacity:0;}}
+body {
+  margin:0;
+  font-family:Arial,sans-serif;
+  background: linear-gradient(160deg,#0f172a,#020617);
+  color:white;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+.container {
+  padding:20px;
+  max-width:500px;
+  margin:auto;
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+}
+h1 { text-align:center; font-size:28px; margin-bottom:15px; letter-spacing:1px; }
+.card {
+  background:rgba(30,41,59,0.95);
+  padding:15px;
+  border-radius:15px;
+  box-shadow:0 0 15px rgba(37,99,235,0.5);
+  margin-bottom:10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover { transform:scale(1.02); box-shadow:0 0 25px rgba(37,99,235,0.8); }
+button {
+  width:100%;
+  padding:14px;
+  margin-top:8px;
+  border:none;
+  border-radius:12px;
+  background:linear-gradient(135deg,#2563eb,#1d4ed8);
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+  transition:0.2s;
+}
+button:hover { transform:scale(1.05); box-shadow:0 0 20px #22c55e; }
+.small-btn { background:#ef4444; font-size:12px; padding:6px; margin-top:5px; }
+.complete-btn { background:#22c55e; margin-top:5px; }
+.back { background:#475569; margin-top:10px; }
+.day-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:10px; }
+.day-btn { background:#334155; padding:10px; border-radius:8px; font-weight:bold; text-align:center; }
+input { width:100%; padding:10px; border-radius:10px; border:none; margin-top:10px; }
+.stat { font-size:16px; margin:5px 0; }
+.confetti { position:fixed;width:8px;height:8px;animation:fall 1s linear;border-radius:50%; z-index:9999; }
+.exercise-list { margin:5px 0; padding-left:15px; list-style-type:circle; }
+/* Animasjoner */
+@keyframes fall { to { transform:translateY(600px) rotate(360deg); opacity:0; } }
+@keyframes pulse { 0% { transform:scale(1); } 50% { transform:scale(1.05); } 100% { transform:scale(1); } }
+button:active { animation:pulse 0.3s; }
+/* Swipe hint */
+.swipe-hint { text-align:center; font-size:12px; color:#aaa; margin:5px 0; }
 </style>
 </head>
 <body>
@@ -33,12 +71,12 @@ input{width:100%;padding:10px;border-radius:10px;border:none;margin-top:10px;}
   let formScore=parseInt(localStorage.getItem('formScore'))||5;
 
   // --- Globale funksjoner ---
-  window.go = function(s){ screen=s; render(); }
-  window.selectDay = function(day){ selectedDay=day; screen='day'; render(); }
-  window.selectWorkout = function(i){ selectedWorkout=i; screen='workoutDetail'; render(); }
-  window.editDay = function(day){ selectedDay=day; screen='editDay'; render(); }
-  
-  window.addWorkout = function(){
+  window.go=function(s){ screen=s; render(); }
+  window.selectDay=function(day){ selectedDay=day; screen='day'; render(); }
+  window.selectWorkout=function(i){ selectedWorkout=i; screen='workoutDetail'; render(); }
+  window.editDay=function(day){ selectedDay=day; screen='editDay'; render(); }
+
+  window.addWorkout=function(){
     const name=document.getElementById('input');
     const details=document.getElementById('detailsInput');
     if(!name||!name.value) return;
@@ -56,15 +94,11 @@ input{width:100%;padding:10px;border-radius:10px;border:none;margin-top:10px;}
     save(); render();
   }
 
-  window.deleteWorkout = function(i){ if(workouts[selectedDay]){ workouts[selectedDay].splice(i,1); save(); render(); } }
-  window.complete = function(i){ if(workouts[selectedDay]&&workouts[selectedDay][i]){ workouts[selectedDay][i].done=true; save(); confetti(); render(); } }
-  window.setDetails = function(i,v){ if(workouts[selectedDay]&&workouts[selectedDay][i]){ workouts[selectedDay][i].details=v; save(); } }
-  window.setForm = function(v){ formScore=v; save(); render(); }
-
-  window.resetWeek = function(){
-    Object.keys(workouts).forEach(d=>{ workouts[d].forEach(w=>w.done=false); });
-    save(); render();
-  }
+  window.deleteWorkout=function(i){ if(workouts[selectedDay]){ workouts[selectedDay].splice(i,1); save(); render(); } }
+  window.complete=function(i){ if(workouts[selectedDay]&&workouts[selectedDay][i]){ workouts[selectedDay][i].done=true; save(); confetti(); render(); } }
+  window.setDetails=function(i,v){ if(workouts[selectedDay]&&workouts[selectedDay][i]){ workouts[selectedDay][i].details=v; save(); } }
+  window.setForm=function(v){ formScore=v; save(); render(); }
+  window.resetWeek=function(){ Object.keys(workouts).forEach(d=>{ workouts[d].forEach(w=>w.done=false); }); save(); render(); }
 
   function save(){ localStorage.setItem('workouts',JSON.stringify(workouts)); localStorage.setItem('formScore',formScore); }
 
@@ -80,12 +114,11 @@ input{width:100%;padding:10px;border-radius:10px;border:none;margin-top:10px;}
   }
 
   function render(){
-    const app=document.getElementById('app');
-    if(!app) return;
+    const app=document.getElementById('app'); if(!app) return;
     switch(screen){
       case 'home':
         app.innerHTML=`
-          <h1>⚡ TRAINING ULTIMATE</h1>
+          <h1>⚡ TRAINING ULTIMATE PRO</h1>
           <div class="card">
             <button onclick="go('profile')">📊 Profile</button>
             <button onclick="go('training')">🏋️ Training</button>
@@ -95,8 +128,8 @@ input{width:100%;padding:10px;border-radius:10px;border:none;margin-top:10px;}
           </div>`; break;
 
       case 'profile':
-        const total = Object.values(workouts).flat().length;
-        const completed = Object.values(workouts).flat().filter(w=>w.done).length;
+        const total=Object.values(workouts).flat().length;
+        const completed=Object.values(workouts).flat().filter(w=>w.done).length;
         app.innerHTML=`
           <h1>📊 Profile</h1>
           <div class="card">
@@ -110,6 +143,7 @@ input{width:100%;padding:10px;border-radius:10px;border:none;margin-top:10px;}
       case 'training':
         app.innerHTML=`
           <h1>🏋️ Training</h1>
+          <div class="swipe-hint">⬅️ Swipe dag eller trykk en dag</div>
           <div class="card day-grid">
             ${Object.keys(workouts).map(d=>`<button class="day-btn" onclick="selectDay('${d}')">📅 ${d}</button>`).join('')}
           </div>
@@ -160,16 +194,16 @@ input{width:100%;padding:10px;border-radius:10px;border:none;margin-top:10px;}
           <button class="back" onclick="go('edit')">⬅️ Back</button>`; break;
 
       case 'progress':
-        const all = Object.values(workouts).flat();
-        const comp = all.filter(w=>w.done).length;
-        const tot = all.length;
-        const percent = tot?Math.round((comp/tot)*100):0;
+        const all=Object.values(workouts).flat();
+        const comp=all.filter(w=>w.done).length;
+        const tot=all.length;
+        const percent=tot?Math.round((comp/tot)*100):0;
         app.innerHTML=`
           <h1>📈 Weekly Progress</h1>
           <div class="card">
             <p>Fullført: ${comp}/${tot} økter</p>
             <div style="background:#334155;border-radius:10px;overflow:hidden;height:20px;margin-top:10px;">
-              <div style="width:${percent}%;background:#22c55e;height:100%;"></div>
+              <div style="width:${percent}%;background:#22c55e;height:100%; transition:width 0.3s;"></div>
             </div>
             <p>${percent}% ferdig</p>
           </div>
