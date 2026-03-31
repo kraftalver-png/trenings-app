@@ -1,177 +1,243 @@
-<!DOCTYPE html>
-<html lang="no">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Training App Ultimate</title>
-<style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: radial-gradient(circle at top, #0f172a, #020617);
-  color: white;
-  min-height: 100vh;
-}
-.container {
-  padding: 20px;
-  max-width: 500px;
-  margin: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-h1 { text-align: center; }
-.card {
-  background: rgba(30,41,59,0.85);
-  padding: 15px;
-  border-radius: 15px;
-  box-shadow: 0 0 15px rgba(37,99,235,0.3);
-}
-button {
-  width: 100%;
-  padding: 14px;
-  margin-top: 8px;
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(135deg,#2563eb,#1d4ed8);
-  color: white;
-  font-size: 15px;
-  cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.2s;
-}
-button:hover { transform: scale(1.03); box-shadow: 0 0 15px #22c55e; }
-.small-btn { background:#ef4444; font-size:12px; padding:6px; }
-.complete-btn { background:#22c55e; }
-.back { background:#475569; }
-.day-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.day-btn { background:#334155; }
-input { width:100%; padding:10px; border-radius:10px; border:none; margin-top:10px; }
-.stat { font-size:16px; margin:5px 0; }
-.confetti { position: fixed; width: 8px; height: 8px; animation: fall 1s linear; border-radius:50%; }
-@keyframes fall { to { transform: translateY(600px) rotate(360deg); opacity:0; } }
-</style>
-</head>
-<body>
-<div class="container" id="app"></div>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-let screen="home";
-let selectedDay=null;
-let selectedWorkout=null;
-let formScore=5;
+import React, { useState } from 'react';
+import { View, Text, Button, TouchableOpacity, FlatList, TextInput, StyleSheet, ScrollView, Animated } from 'react-native';
 
-let workouts=JSON.parse(localStorage.getItem("workouts"))||{
-  Monday:[], Tuesday:[], Wednesday:[], Thursday:[], Friday:[], Saturday:[], Sunday:[]
+// Enkel konfetti animasjon
+const Confetti = () => {
+  const confettiArray = Array.from({ length: 30 }, (_, i) => ({
+    left: Math.random() * 100,
+    rotate: Math.random() * 360,
+    color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+  }));
+
+  return (
+    <>
+      {confettiArray.map((c, i) => (
+        <Animated.View
+          key={i}
+          style={{
+            position: 'absolute',
+            width: 8,
+            height: 8,
+            backgroundColor: c.color,
+            left: `${c.left}%`,
+            borderRadius: 4,
+            transform: [{ rotate: `${c.rotate}deg` }, { translateY: new Animated.Value(-50) }],
+            animation: 'fall 1s linear',
+          }}
+        />
+      ))}
+    </>
+  );
 };
 
-function save(){ localStorage.setItem("workouts", JSON.stringify(workouts)); }
-function go(s){ screen=s; render(); }
-function selectDay(day){ selectedDay=day; screen="day"; render(); }
-function selectWorkout(index){ selectedWorkout=index; screen="workoutDetail"; render(); }
+type Workout = { name: string; details?: string; done?: boolean };
+type Day = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 
-function render(){
-const app=document.getElementById("app");
-if(!app) return;
+export default function App() {
+  const [screen, setScreen] = useState<'home'|'profile'|'training'|'day'|'workoutDetail'|'edit'|'editDay'|'progress'>('home');
+  const [workouts, setWorkouts] = useState<Record<Day, Workout[]>>({
+    Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: []
+  });
+  const [selectedDay, setSelectedDay] = useState<Day | null>(null);
+  const [selectedWorkout, setSelectedWorkout] = useState<number | null>(null);
+  const [formScore, setFormScore] = useState(5);
+  const [confetti, setConfetti] = useState(false);
 
-try {
-if(screen==="home"){
-app.innerHTML=`<h1>⚡ TRAINING ULTIMATE</h1>
-<div class="card">
-<button onclick="go('profile')">📊 Profile</button>
-<button onclick="go('training')">🏋️ Training</button>
-<button onclick="go('edit')">✏️ Edit</button>
-<button onclick="go('progress')">📈 Weekly Progress</button>
-</div>`;
-}
-else if(screen==="profile"){
-let total=Object.values(workouts).flat().length;
-let completed=Object.values(workouts).flat().filter(w=>w.done).length;
-app.innerHTML=`<h1>📊 Profile</h1>
-<div class="card">
-<p class="stat">🔥 Total økter: ${total}</p>
-<p class="stat">✅ Fullført: ${completed}</p>
-<p class="stat">⚡ Form: ${formScore}/10</p>
-</div>
-<input type="range" min="1" max="10" value="${formScore}" onchange="setForm(this.value)">
-<button class="back" onclick="go('home')">⬅️ Back</button>`;
-}
-else if(screen==="training"){
-let days=Object.keys(workouts).map(d=>`<button class="day-btn" onclick="selectDay('${d}')">📅 ${d}</button>`).join("");
-app.innerHTML=`<h1>🏋️ Training</h1><div class="card day-grid">${days}</div><button class="back" onclick="go('home')">⬅️ Back</button>`;
-}
-else if(screen==="day"){
-let list=workouts[selectedDay].map((w,i)=>`
-<div class="card">
-${w.done?"✅":"🔥"} ${w.name}
-<button class="complete-btn" onclick="complete(${i})">✔ Fullfør</button>
-<button class="small-btn" onclick="selectWorkout(${i})">ℹ️ Se detaljer</button>
-</div>`).join("");
-if(!list) list="<p>Ingen økter...</p>";
-app.innerHTML=`<h1>${selectedDay}</h1>${list}<button class="back" onclick="go('training')">⬅️ Back</button>`;
-}
-else if(screen==="workoutDetail"){
-let workout=(workouts[selectedDay]&&workouts[selectedDay][selectedWorkout])||{name:"Økt ikke funnet", details:""};
-app.innerHTML=`<h1>${workout.name}</h1>
-<div class="card">${workout.details||"Ingen detaljer lagt til."}</div>
-<button class="back" onclick="screen='day'; render()">⬅️ Back</button>`;
-}
-else if(screen==="edit"){
-let days=Object.keys(workouts).map(d=>`<button class="day-btn" onclick="editDay('${d}')">✏️ ${d}</button>`).join("");
-app.innerHTML=`<h1>Edit</h1><div class="card day-grid">${days}</div><button class="back" onclick="go('home')">⬅️ Back</button>`;
-}
-else if(screen==="editDay"){
-let list=(workouts[selectedDay]||[]).map((w,i)=>`
-<div class="card">🔥 ${w.name}
-<button class="small-btn" onclick="deleteWorkout(${i})">❌ Slett</button>
-<input placeholder='Detaljer...' value='${w.details||""}' onchange='setDetails(${i},this.value)'></div>`).join("");
-app.innerHTML=`<h1>${selectedDay}</h1>${list}
-<input id="input" placeholder="Ny økt...">
-<input id="detailsInput" placeholder="Detaljer (f.eks. 4 min x 4 lengder)">
-<button onclick="addWorkout()">➕ Legg til</button>
-<button class="back" onclick="go('edit')">⬅️ Back</button>`;
-}
-else if(screen==="progress"){
-let completed=Object.values(workouts).flat().filter(w=>w.done).length;
-let total=Object.values(workouts).flat().length;
-let percent=total?Math.round((completed/total)*100):0;
-app.innerHTML=`<h1>📈 Weekly Progress</h1>
-<div class="card">
-<p>Fullført: ${completed}/${total} økter</p>
-<div style="background:#334155; border-radius:10px; overflow:hidden; height:20px; margin-top:10px;">
-<div style="width:${percent}%; background:#22c55e; height:100%;"></div>
-</div>
-<p>${percent}% ferdig</p>
-</div>
-<button class="back" onclick="go('home')">⬅️ Back</button>`;
-}
-} catch(e){
-app.innerHTML=`<h1>Feil i appen</h1><p>${e}</p>`;
-console.error(e);
-}
+  // Hjelpefunksjoner
+  const addWorkout = (name: string, details: string) => {
+    if (!selectedDay || !name) return;
+    setWorkouts(prev => ({
+      ...prev,
+      [selectedDay]: [...prev[selectedDay], { name, details, done: false }]
+    }));
+  };
+
+  const deleteWorkout = (i: number) => {
+    if (!selectedDay) return;
+    setWorkouts(prev => ({
+      ...prev,
+      [selectedDay]: prev[selectedDay].filter((_, idx) => idx !== i)
+    }));
+  };
+
+  const completeWorkout = (i: number) => {
+    if (!selectedDay) return;
+    setWorkouts(prev => {
+      const copy = [...prev[selectedDay]];
+      copy[i].done = true;
+      return { ...prev, [selectedDay]: copy };
+    });
+    setConfetti(true);
+    setTimeout(() => setConfetti(false), 1200);
+  };
+
+  // Render funksjoner
+  const renderHome = () => (
+    <View style={styles.container}>
+      <Text style={styles.title}>⚡ TRAINING ULTIMATE</Text>
+      <View style={styles.card}>
+        <Button title="📊 Profile" onPress={() => setScreen('profile')} />
+        <Button title="🏋️ Training" onPress={() => setScreen('training')} />
+        <Button title="✏️ Edit" onPress={() => setScreen('edit')} />
+        <Button title="📈 Weekly Progress" onPress={() => setScreen('progress')} />
+      </View>
+    </View>
+  );
+
+  const renderProfile = () => {
+    const total = Object.values(workouts).flat().length;
+    const completed = Object.values(workouts).flat().filter(w => w.done).length;
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>📊 Profile</Text>
+        <View style={styles.card}>
+          <Text style={styles.stat}>🔥 Total økter: {total}</Text>
+          <Text style={styles.stat}>✅ Fullført: {completed}</Text>
+          <Text style={styles.stat}>⚡ Form: {formScore}/10</Text>
+        </View>
+        <Text>Form justering:</Text>
+        <TextInput
+          keyboardType="numeric"
+          style={styles.input}
+          value={formScore.toString()}
+          onChangeText={t => setFormScore(Number(t))}
+        />
+        <Button title="⬅️ Back" onPress={() => setScreen('home')} />
+      </View>
+    );
+  };
+
+  const renderTraining = () => {
+    const days: Day[] = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>🏋️ Training</Text>
+        <View style={styles.dayGrid}>
+          {days.map(d => (
+            <Button key={d} title={d} onPress={() => { setSelectedDay(d); setScreen('day'); }} />
+          ))}
+        </View>
+        <Button title="⬅️ Back" onPress={() => setScreen('home')} />
+      </View>
+    );
+  };
+
+  const renderDay = () => {
+    if (!selectedDay) return null;
+    return (
+      <ScrollView style={styles.container}>
+        <Text style={styles.title}>{selectedDay}</Text>
+        {(workouts[selectedDay].length > 0 ? workouts[selectedDay] : [{ name: 'Ingen økter...', done: false }]).map((w,i) => (
+          <View key={i} style={styles.card}>
+            <Text>{w.done ? '✅' : '🔥'} {w.name}</Text>
+            {w.name !== 'Ingen økter...' && (
+              <>
+                <Button title="✔ Fullfør" onPress={() => completeWorkout(i)} color="#22c55e"/>
+                <Button title="ℹ️ Se detaljer" onPress={() => { setSelectedWorkout(i); setScreen('workoutDetail'); }} />
+              </>
+            )}
+          </View>
+        ))}
+        <Button title="⬅️ Back" onPress={() => setScreen('training')} />
+      </ScrollView>
+    );
+  };
+
+  const renderWorkoutDetail = () => {
+    if (!selectedDay || selectedWorkout === null) return null;
+    const w = workouts[selectedDay][selectedWorkout];
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>{w.name}</Text>
+        <View style={styles.card}>
+          <Text>{w.details || 'Ingen detaljer lagt til.'}</Text>
+        </View>
+        <Button title="⬅️ Back" onPress={() => setScreen('day')} />
+      </View>
+    );
+  };
+
+  const renderEdit = () => {
+    const days: Day[] = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>✏️ Edit</Text>
+        <View style={styles.dayGrid}>
+          {days.map(d => (
+            <Button key={d} title={d} onPress={() => { setSelectedDay(d); setScreen('editDay'); }} />
+          ))}
+        </View>
+        <Button title="⬅️ Back" onPress={() => setScreen('home')} />
+      </View>
+    );
+  };
+
+  const renderEditDay = () => {
+    if (!selectedDay) return null;
+    const [newName, setNewName] = useState('');
+    const [newDetails, setNewDetails] = useState('');
+    return (
+      <ScrollView style={styles.container}>
+        <Text style={styles.title}>{selectedDay}</Text>
+        {workouts[selectedDay].map((w,i) => (
+          <View key={i} style={styles.card}>
+            <Text>🔥 {w.name}</Text>
+            <Button title="❌ Slett" onPress={() => deleteWorkout(i)} color="#ef4444"/>
+            <TextInput placeholder="Detaljer..." value={w.details} onChangeText={t => { 
+              const copy = [...workouts[selectedDay]]; 
+              copy[i].details = t; 
+              setWorkouts(prev => ({ ...prev, [selectedDay]: copy }));
+            }} style={styles.input}/>
+          </View>
+        ))}
+        <TextInput placeholder="Ny økt..." value={newName} onChangeText={setNewName} style={styles.input}/>
+        <TextInput placeholder="Detaljer..." value={newDetails} onChangeText={setNewDetails} style={styles.input}/>
+        <Button title="➕ Legg til" onPress={() => { addWorkout(newName, newDetails); setNewName(''); setNewDetails(''); }} />
+        <Button title="⬅️ Back" onPress={() => setScreen('edit')} />
+      </ScrollView>
+    );
+  };
+
+  const renderProgress = () => {
+    const all = Object.values(workouts).flat();
+    const comp = all.filter(w => w.done).length;
+    const total = all.length;
+    const percent = total ? Math.round((comp/total)*100) : 0;
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>📈 Weekly Progress</Text>
+        <View style={styles.card}>
+          <Text>Fullført: {comp}/{total} økter</Text>
+          <View style={{ backgroundColor:'#334155', borderRadius:10, overflow:'hidden', height:20, marginTop:10 }}>
+            <View style={{ width:`${percent}%`, backgroundColor:'#22c55e', height:'100%' }} />
+          </View>
+          <Text>{percent}% ferdig</Text>
+        </View>
+        <Button title="⬅️ Back" onPress={() => setScreen('home')} />
+      </View>
+    );
+  };
+
+  return (
+    <View style={{ flex:1 }}>
+      {confetti && <Confetti />}
+      {screen==='home' && renderHome()}
+      {screen==='profile' && renderProfile()}
+      {screen==='training' && renderTraining()}
+      {screen==='day' && renderDay()}
+      {screen==='workoutDetail' && renderWorkoutDetail()}
+      {screen==='edit' && renderEdit()}
+      {screen==='editDay' && renderEditDay()}
+      {screen==='progress' && renderProgress()}
+    </View>
+  );
 }
 
-function editDay(day){ selectedDay=day; screen="editDay"; render(); }
-function addWorkout(){
-const name=document.getElementById("input");
-const details=document.getElementById("detailsInput");
-if(!name || !name.value) return;
-workouts[selectedDay].push({name:name.value, details:details?details.value:"", done:false});
-if(name) name.value="";
-if(details) details.value="";
-save(); render();
-}
-function deleteWorkout(i){ if(workouts[selectedDay]){ workouts[selectedDay].splice(i,1); save(); render(); } }
-function complete(i){ if(workouts[selectedDay]&&workouts[selectedDay][i]){ workouts[selectedDay][i].done=true; save(); confetti(); render(); } }
-function setDetails(i,v){ if(workouts[selectedDay]&&workouts[selectedDay][i]){ workouts[selectedDay][i].details=v; save(); } }
-function setForm(v){ formScore=v; render(); }
-function confetti(){for(let i=0;i<30;i++){let c=document.createElement("div");c.className="confetti";c.style.left=Math.random()*100+"%";c.style.background=`hsl(${Math.random()*360},100%,50%)`;document.body.appendChild(c);setTimeout(()=>c.remove(),1200);}}
-
-render();
+const styles = StyleSheet.create({
+  container: { flex:1, padding:20 },
+  title: { fontSize:28, fontWeight:'bold', marginBottom:20, textAlign:'center', color:'white' },
+  card: { backgroundColor:'rgba(30,41,59,0.9)', padding:15, borderRadius:15, marginBottom:10 },
+  dayGrid: { flexDirection:'row', flexWrap:'wrap', justifyContent:'space-between' },
+  stat: { fontSize:16, marginVertical:5 },
+  input: { backgroundColor:'white', color:'black', padding:10, borderRadius:10, marginBottom:10 }
 });
-</script>
-</body>
-</html>
