@@ -1,0 +1,179 @@
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, FlatList, TextInput } from "react-native";
+
+export default function App() {
+  const [screen, setScreen] = useState("home");
+
+  // Simple state for workouts
+  const [workouts, setWorkouts] = useState({
+    Monday: [],
+    Tuesday: [],
+    Wednesday: [],
+    Thursday: [],
+    Friday: [],
+    Saturday: [],
+    Sunday: [],
+  });
+
+  const [selectedDay, setSelectedDay] = useState("Monday");
+  const [newWorkout, setNewWorkout] = useState("");
+
+  const addWorkout = () => {
+    if (!newWorkout) return;
+    setWorkouts({
+      ...workouts,
+      [selectedDay]: [...workouts[selectedDay], newWorkout],
+    });
+    setNewWorkout("");
+  };
+
+  const renderHome = () => (
+    <View style={styles.container}>
+      <Text style={styles.title}>My Training App</Text>
+
+      <TouchableOpacity style={styles.button} onPress={() => setScreen("profile")}>
+        <Text style={styles.buttonText}>Profile</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={() => setScreen("training")}>
+        <Text style={styles.buttonText}>Training</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={() => setScreen("edit")}>
+        <Text style={styles.buttonText}>Edit</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderProfile = () => (
+    <View style={styles.container}>
+      <Text style={styles.title}>Profile</Text>
+      <Text style={styles.text}>Stats will come here</Text>
+
+      <TouchableOpacity style={styles.button} onPress={() => setScreen("home")}>
+        <Text style={styles.buttonText}>Back</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderTraining = () => (
+    <View style={styles.container}>
+      <Text style={styles.title}>Training</Text>
+
+      <FlatList
+        data={Object.keys(workouts)}
+        keyExtractor={(item) => item}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.dayButton}
+            onPress={() => setSelectedDay(item)}
+          >
+            <Text style={styles.buttonText}>{item}</Text>
+          </TouchableOpacity>
+        )}
+      />
+
+      <Text style={styles.subtitle}>{selectedDay}</Text>
+
+      <FlatList
+        data={workouts[selectedDay]}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <Text style={styles.text}>- {item}</Text>
+        )}
+      />
+
+      <TouchableOpacity style={styles.button} onPress={() => setScreen("home")}>
+        <Text style={styles.buttonText}>Back</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderEdit = () => (
+    <View style={styles.container}>
+      <Text style={styles.title}>Edit Training</Text>
+
+      <FlatList
+        data={Object.keys(workouts)}
+        keyExtractor={(item) => item}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.dayButton}
+            onPress={() => setSelectedDay(item)}
+          >
+            <Text style={styles.buttonText}>{item}</Text>
+          </TouchableOpacity>
+        )}
+      />
+
+      <Text style={styles.subtitle}>Editing: {selectedDay}</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Add workout..."
+        value={newWorkout}
+        onChangeText={setNewWorkout}
+      />
+
+      <TouchableOpacity style={styles.button} onPress={addWorkout}>
+        <Text style={styles.buttonText}>Add</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.button} onPress={() => setScreen("home")}>
+        <Text style={styles.buttonText}>Back</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  if (screen === "profile") return renderProfile();
+  if (screen === "training") return renderTraining();
+  if (screen === "edit") return renderEdit();
+
+  return renderHome();
+}
+
+const styles = {
+  container: {
+    flex: 1,
+    backgroundColor: "#0f172a",
+    padding: 20,
+  },
+  title: {
+    fontSize: 28,
+    color: "white",
+    marginBottom: 20,
+    fontWeight: "bold",
+  },
+  subtitle: {
+    fontSize: 20,
+    color: "white",
+    marginTop: 10,
+  },
+  text: {
+    color: "white",
+    marginVertical: 5,
+  },
+  button: {
+    backgroundColor: "#2563eb",
+    padding: 15,
+    borderRadius: 10,
+    marginVertical: 10,
+  },
+  dayButton: {
+    backgroundColor: "#1e293b",
+    padding: 10,
+    borderRadius: 8,
+    marginVertical: 5,
+  },
+  buttonText: {
+    color: "white",
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  input: {
+    backgroundColor: "white",
+    padding: 10,
+    borderRadius: 8,
+    marginVertical: 10,
+  },
+};
